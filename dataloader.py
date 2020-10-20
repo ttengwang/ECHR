@@ -183,7 +183,6 @@ class DataLoader(data.Dataset):
         print('DataLoader loading features file: ', opt.input_c3d_dir2)
         print('DataLoader loading train label file: ', opt.train_label_for_cg)
         print('DataLoader loading val label file: ', opt.val_label_for_cg)
-        print('DataLoader loading att file: ', opt.input_att_dir)
 
         with open(self.opt.video_data_for_cg) as f:
             self.info = json.load(f)
