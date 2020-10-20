@@ -1,6 +1,4 @@
 import argparse
-import multiprocessing
-
 
 def parse_opts():
     parser = argparse.ArgumentParser()
@@ -294,12 +292,3 @@ def parse_opts():
         args.num_vids_eval = 10
         args.shuffle = 0
     return args
-
-
-if __name__ == '__main__':
-    opt = parse_opts()
-    import json
-
-    json.dump(vars(opt), open('20190106_threestream_opts.json', 'w'))
-    print(opt.start_from == None)
-    pass

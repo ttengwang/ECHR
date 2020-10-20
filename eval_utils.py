@@ -2,22 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import pdb
-
 import torch
-import torch.nn as nn
 from torch.autograd import Variable
 
 import numpy as np
 import json
-from json import encoder
-import random
-import string
 import time
-import os
 import sys
 import misc.utils as utils
-import scripts.wt_preprocessing as wt
 
 def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what='tap', debug=False):
     split = eval_kwargs.get('split', 'val')
@@ -48,13 +40,7 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
     with torch.set_grad_enabled(False):
         while True:
             data = loader.get_batch(split)
-            #sign = get_interest(data['vid'])
-            #if not sign:
-            #    continue
-
-            # data = utils.get_dummy_data(tap_opt,eval_kwargs)
             n = n + 1
-            # n = n + loader.batch_size
             if iter % int(len(loader) / 100) == 0:
                 print('generating result.json:{:.3f}%'.format(100 * iter / len(loader)))
 
@@ -322,34 +308,6 @@ def gettop1000(pred_proposals, tap_masks, cg_gts, duration, featstamp_to_time, v
     return index_select_list, featstamp_list, cg_select_list, timestamp_list, confidence
 
 
-'''
-def S_gettop1000(pred_proposals, tap_masks, lm_gts, duration, featstamp_to_time, val_score_thres=0, topN=1000):
-    nfeats, K = pred_proposals.shape
-    pred_proposals = pred_proposals * torch.FloatTensor(tap_masks).cuda()
-    sort, _ = pred_proposals.view(-1).sort()
-    score_threshold = sort[-min(len(sort), topN)]
-    good_proposals = pred_proposals >= max(score_threshold, val_score_thres)
-    index_select_list = []
-    lm_select_list = []
-    timestamp_list = []
-    featstamp_list = []
-    confidence = []
-    for n in range(nfeats):
-        for k in range(K):
-            if tap_masks[n,k]==1 and good_proposals[n, k] == 1:
-                index_select_list.append(k)
-                if len(lm_gts):  # if lm_gts is not none
-                    lm_select_list.append(lm_gts[k, k-n-1])
-                timestamp = featstamp_to_time(n, k, nfeats, duration)
-                timestamp_list.append(timestamp)
-                featstamp_list.append([n, k + 1])
-                confidence.append(pred_proposals[n, k])
-
-    return index_select_list, featstamp_list, lm_select_list, timestamp_list, confidence
-
-'''
-
-
 def gettop1000_nms(pred_proposals, tap_masks, cg_gts, duration, featstamp_to_time, overlap=0.8, topN=1000):
     props = []
     scores = []
@@ -406,38 +364,3 @@ def reranking(vid_info):
         if video['re_score'] >= score_threshold:
             reranking_info.append(video)
     return reranking_info
-
-
-def get_interest(vid):
-    interest = ['v_hDPLy21Yyuk','v_CSDApI2nHPU', 'v_6F9C3dIU4kU','v_A8xThM3onkc']
-    cand = 'v_yACg55C3IlM v_ZcgahXg_ELw v_gLfvk2SSj1c v_pMDFkrK0KRc v_tyjUDi3uLd0 v_A7ER02-zr54 v_sG3JpMuXFnU v_sIYRsGZm2XY v_8TGG-FZx0cc v_Ce0t7gfJl5w v_iosb2TdQ7yY v_EGLJPCJnG64 v_oKauZV0DHHk v_5hXH-TorJ6M v_mio5dnRbo4w v_Sd08rsPTroE v_JQpx7CcTstU v_LsK452h29ng v_WZeMQ-5dFlM v_g_Cz69Q5bKM v__b_9BQvJ_v4 v_M1-G6KEhY-M v_kyafh7Ownao v_291szrilAVE v__8aVDfNQtq0 v_BodF651KcIg v_vdTisVMhW7I v_s_VFaQTlskE v_Rai5nKbB6wU v_furUOKw0Qzs v_1ioKX0iuico v_onBAyGhqubg v_fZQS02Ypca4 v_UnOzWl0EGCA v_E7C91KoML-o v_r8AXq1Q5bn0 v_TxYZLJQOHvY v_OzXD3WO6jrs v_ANwaFSIHdW0 v_4x3dgSgXQ38 v_mSonugqhYuE v_KEXm-3H6eTg v_Vtsv9iPHDqg v_e4XYZAs7tcs v_FLZPaPf027E v_R6kXT4Spiwo v_uF9othvTXn8 v_Ff8QLpH5T1c v_SKtUq_1cOSs v_1XtjXqqPvyQ v_ulopyhvgyQg v_EZKrOWEKX_Q v__15t4WTR19s v_zmmiX3_TJ84 v_ss6XN-JP_x8 v_-F7QWQA8Eh8 v_ku65ME0vW8s v_O0KUnuhLwj0 v_6hjRnngC73o v_37gHYr2uDZo v_Ta_Kf0dCd3U v_hvy_V1EWKEI v_nKa1e_CpvoY v_sWQ65uwxXbA v_BJ9r8_JnG0k v_l9o9R7UcPuc v_w3N0Pyz2-m0 v_jmxzDxfSbZM v_GLL1vOrV5Qo v_rZu5ZJmAlbI v_DepG0r3JiV4 v_TspdPLMqTx0 v_FEqLmpNzxdg v_qy-LbstiMYg v_9VWoQpg9wqE v_pnEYhDVXVJ0 v_FQkvwPpDomw v_5Foo5NSjEXQ v_HM_rHjh-wqQ v_7ZbH4vHTmVs v_SqIVJrXxO3g v_Gfsk28SzgXk v_JoQywfQ6B-8 v_e6J_ygZ779A v_hBjVRKwCUNA v_MmOQhq95Z_g v_b8eqn-GTdcc v_9iJ8snVY2s0 v_rWdXyKZnL2U v_obUkL-Ya8dE v_3L0MnbQkLWM v_ah3tGziTbds v_DzxPreFrmFE v_2DwBXRhtX4s v_49drGj3JUg4 v_pXcFBfv5Sf4'
-    interest = cand.split(' ')
-    #interest = ['v_A8xThM3onkc']
-    if vid in interest:
-        return True
-    else:
-        return False
-
-def relation_analyse(vid, vid_info):
-    interest = ['v_hDPLy21Yyuk', 'v_CSDApI2nHPU', 'v_6F9C3dIU4kU', 'v_A8xThM3onkc']
-    # interest = ['v_A8xThM3onkc']
-    cand = 'v_yACg55C3IlM v_ZcgahXg_ELw v_gLfvk2SSj1c v_pMDFkrK0KRc v_tyjUDi3uLd0 v_A7ER02-zr54 v_sG3JpMuXFnU v_sIYRsGZm2XY v_8TGG-FZx0cc v_Ce0t7gfJl5w v_iosb2TdQ7yY v_EGLJPCJnG64 v_oKauZV0DHHk v_5hXH-TorJ6M v_mio5dnRbo4w v_Sd08rsPTroE v_JQpx7CcTstU v_LsK452h29ng v_WZeMQ-5dFlM v_g_Cz69Q5bKM v__b_9BQvJ_v4 v_M1-G6KEhY-M v_kyafh7Ownao v_291szrilAVE v__8aVDfNQtq0 v_BodF651KcIg v_vdTisVMhW7I v_s_VFaQTlskE v_Rai5nKbB6wU v_furUOKw0Qzs v_1ioKX0iuico v_onBAyGhqubg v_fZQS02Ypca4 v_UnOzWl0EGCA v_E7C91KoML-o v_r8AXq1Q5bn0 v_TxYZLJQOHvY v_OzXD3WO6jrs v_ANwaFSIHdW0 v_4x3dgSgXQ38 v_mSonugqhYuE v_KEXm-3H6eTg v_Vtsv9iPHDqg v_e4XYZAs7tcs v_FLZPaPf027E v_R6kXT4Spiwo v_uF9othvTXn8 v_Ff8QLpH5T1c v_SKtUq_1cOSs v_1XtjXqqPvyQ v_ulopyhvgyQg v_EZKrOWEKX_Q v__15t4WTR19s v_zmmiX3_TJ84 v_ss6XN-JP_x8 v_-F7QWQA8Eh8 v_ku65ME0vW8s v_O0KUnuhLwj0 v_6hjRnngC73o v_37gHYr2uDZo v_Ta_Kf0dCd3U v_hvy_V1EWKEI v_nKa1e_CpvoY v_sWQ65uwxXbA v_BJ9r8_JnG0k v_l9o9R7UcPuc v_w3N0Pyz2-m0 v_jmxzDxfSbZM v_GLL1vOrV5Qo v_rZu5ZJmAlbI v_DepG0r3JiV4 v_TspdPLMqTx0 v_FEqLmpNzxdg v_qy-LbstiMYg v_9VWoQpg9wqE v_pnEYhDVXVJ0 v_FQkvwPpDomw v_5Foo5NSjEXQ v_HM_rHjh-wqQ v_7ZbH4vHTmVs v_SqIVJrXxO3g v_Gfsk28SzgXk v_JoQywfQ6B-8 v_e6J_ygZ779A v_hBjVRKwCUNA v_MmOQhq95Z_g v_b8eqn-GTdcc v_9iJ8snVY2s0 v_rWdXyKZnL2U v_obUkL-Ya8dE v_3L0MnbQkLWM v_ah3tGziTbds v_DzxPreFrmFE v_2DwBXRhtX4s v_49drGj3JUg4 v_pXcFBfv5Sf4'
-    interest = cand.split(' ')
-
-    if vid in interest:
-        attention_map = np.load('figs/relation_softmax.npy')
-        n,m=attention_map.shape
-        for p in vid_info:
-            print(p['sentence'])
-
-        pdb.set_trace()
-        '''
-        for i in range(n):
-            idx = np.argsort(-1 * attention_map[i])
-            good_id = idx[:10]
-            print(good_id)
-            for id in good_id:
-                print('relation of id{} and id{}'.format(i,id))
-                print(vid_info[id])
-            pdb.set_trace()
-        '''

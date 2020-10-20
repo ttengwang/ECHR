@@ -3,14 +3,9 @@ from __future__ import division
 from __future__ import print_function
 
 import models
-import os
-# from dataloaderraw import *
-
 import argparse
 import torch
 import logging
-import time
-import cPickle
 
 from CaptionGenerator import CaptionGenerator
 from dataloader import *

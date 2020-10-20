@@ -1,10 +1,5 @@
-# This file contains ShowAttendTell and AllImg model
+# This file is based on https://github.com/ruotianluo/ImageCaptioning.pytorch/
 
-# ShowAttendTell is from Show, Attend and Tell: Neural Image Caption Generation with Visual Attention
-# https://arxiv.org/abs/1502.03044
-
-# AllImg is a model where
-# img feature is concatenated with word embedding at every time step as the input of lstm
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -1061,8 +1056,6 @@ class ThreestreamModel_2stream_CC(OldModel):
     def __init__(self, opt):
         super(ThreestreamModel_2stream_CC, self).__init__(opt)
         self.core = ThreeStream_Core_2stream_CC(opt)
-
-
 
 class TwostreamModel_3LSTM(OldModel):
     def __init__(self, opt):

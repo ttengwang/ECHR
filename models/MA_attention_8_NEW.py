@@ -1,42 +1,10 @@
 # coding:utf-8
-# 1. position encoding: length-length' --> length'/length 2.dropout
-import pdb
-
 import torch
 import numpy as np
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import math
-from dataloader import plot_matrix
-import pandas as pd
-
-def save_and_plot_realtion_weight(aff_weight, aff_scale, weighted_aff, aff_softmax):
-    p,s,r,a = aff_weight.cpu(),aff_scale.cpu(),weighted_aff.cpu(),aff_softmax.cpu()
-    m_p =( p/p.sum(2,keepdim=True)).mean(1).numpy()
-    m_s =( s/s.sum(2,keepdim=True)).mean(1).numpy()
-    m_r =( r/r.sum(2,keepdim=True)).mean(1).numpy()
-    m_a =( a/a.sum(2,keepdim=True)).mean(1).numpy()
-
-    data1 = pd.DataFrame(m_a)
-    data1.to_csv('figs/finaldata.csv')
-
-    p=p.numpy()
-    s=s.numpy()
-    r=r.numpy()
-    a=a.numpy()
-    np.save('figs/pos_relation.npy', m_p)
-    np.save('figs/semantic_relation.npy', m_s)
-    np.save('figs/relation.npy', m_r)
-    np.save('figs/relation_softmax.npy', m_a)
-    # pdb.set_trace()
-    names=['p','s','r','a']
-    means=[m_p,m_s,m_r,m_a]
-
-    for i,d in enumerate([p,s,r,a]):
-        for j in range(d.shape[1]):
-            plot_matrix(d[:,j,:],'figs/{}_relation{}.jpg'.format(names[i],j))
-        plot_matrix(means[i], 'figs/{}_relation_MEAN.jpg'.format(names[i]))
 
 class MA_Attention8(nn.Module):
     def __init__(self, opt):
@@ -60,24 +28,11 @@ class MA_Attention8(nn.Module):
         self.d_pos_vec = opt.d_pos_vec
         self.event_emb = nn.Linear(opt.TSRM_input_dim, opt.d_feats)
         self.fST_type = vars(opt).get('fST_type', 'fST0')
-        # self.position_enc = nn.Embedding.from_pretrained(
-        #    get_sinusoid_encoding_table(fusion_opt.n_position, fusion_opt.d_pos_vec, padding_idx=0),
-        #    freeze=True)
 
-        #self.enc_attn = MultiHeadAttention(fusion_opt.n_head, fusion_opt.d_feats, fusion_opt.d_k, fusion_opt.d_v)
         self.enc_attn = attention_module_multi_head(opt.d_pos_vec, opt.d_feats, (opt.d_feats, opt.d_feats, opt.d_o), group=opt.n_head, fST_type=self.fST_type)
 
 
     def forward(self, feats, soi_select_list):
-
-        '''
-        :param event_feats: [num_rois, event_dim]
-        :param soi_select_list: [num_rois, 2],list
-        :param c3d_feature: [num_rois, video_dim]
-        :param event_pos:
-        :param lda_feats:
-        :return: enc_feats:[num_rois, self.d_feats]
-        '''
 
         num_sois = len(soi_select_list)
         if self.use_posit:
@@ -95,7 +50,6 @@ class MA_Attention8(nn.Module):
 
     @staticmethod
     def extract_position_embedding(position_mat, feat_dim, wave_length=10000):
-        # position_mat, [num_rois, nongt_dim, 2]
         num_rois, nongt_dim, _ = position_mat.shape
         feat_range = np.arange(0, feat_dim / 4)
 
@@ -106,20 +60,11 @@ class MA_Attention8(nn.Module):
         sin_mat = np.sin(div_mat)
         cos_mat = np.cos(div_mat)
         embedding = np.concatenate((sin_mat, cos_mat), axis=3)
-        # embedding, [num_rois, nongt_dim, feat_dim]
         embedding = np.reshape(embedding, newshape=(num_rois, nongt_dim, feat_dim))
         return embedding
 
     @staticmethod
     def extract_position_matrix(bbox, nongt_dim):
-        """ Extract position matrix
-
-        Args:
-            bbox: [num_boxes, 2]
-
-        Returns:
-            position_matrix: [num_boxes, num_boxes, 2]
-        """
         start, end = np.split(bbox, 2, axis=1)
         center = 0.5 * (start + end)
         length = (end - start).astype('float32')
