@@ -30,13 +30,10 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
 
     n = 0
     loss_sum = [0, 0, 0, 0, 0]
-    loss_evals = 1e-8
-    predictions = []
     tap_cg_pred = {}
     iter = 0
     bad_vid_num = 0
 
-    time_consumption = {}
     with torch.set_grad_enabled(False):
         while True:
             data = loader.get_batch(split)
@@ -55,12 +52,8 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
             tmp = [Variable(torch.from_numpy(_)).cuda() for _ in tmp]
             c3d_feats, att_feats, lda_feats = tmp
 
-            torch.cuda.synchronize()
-            t0 = time.time()
             tap_feats, pred_proposals = tap_model(c3d_feats)
 
-            torch.cuda.synchronize()
-            t1 = time.time()
             # select top score 1000 proposals
             cg_gts = data['cg_gts'] if data.get('cg_labels', None) is not None else []
 
@@ -124,7 +117,6 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
             else:
                 assert 1==0
 
-            t2 = time.time()
 
             if (len(cg_select_list) == 0) and (split != 'test'):
                 sents = []
@@ -142,8 +134,6 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
                         cg_score = cg_prob.sum(1).cpu().numpy().astype('float')
                         # cg_prob = np.round(cg_prob, 3).tolist()
                         sents = utils.decode_sequence(loader.get_vocab(), seq)  # [proposal_num , max_sent_len]
-                    torch.cuda.synchronize()
-                    t3 = time.time()
 
             # get val_loss
             if get_eval_loss and tap_crit and (data.get('cg_labels', None) is not None) and len(cg_select_list) and (split != 'test'):
@@ -202,7 +192,6 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
                 with open(json_path+'iter{}'.format(iter), 'w') as f:
                     json.dump(pred2json, f)
             '''
-            time_consumption[iter] = {'tep': t1 - t0, 'cg': t3-t2, 'postprocess': t2-t1}
             iter += 1
             #relation_analyse(data['vid'], vid_info)
             # torch.cuda.empty_cache()
@@ -220,26 +209,16 @@ def eval_split(models, crits, loader, json_path, eval_kwargs={}, flag_eval_what=
     with open(json_path, 'w') as f:
         json.dump(pred2json, f)
 
-    json.dump(time_consumption, open(json_path+'.time_consumption.json', 'w'))
-
     sys.path.append('external_tool/densevid_eval')
     sys.path.append('external_tool/densevid_eval/coco-caption')
 
     score = {'ARAN':0}
     if lang_eval:
         from evaluate import eval_score
-
         sample_score = eval_score(json_path, flag_eval_what == 'tap', eval_kwargs['val_all_metrics'])
         for key in sample_score.keys():
             score[key] = np.array(sample_score[key])
         print('vilid vid num:{}, bad_num:{}'.format((eval_kwargs['num_vids_eval'] - bad_vid_num), bad_vid_num))
-
-    if flag_eval_what=='tap':
-        import external_tool.eval_ARAN.get_proposal_performance as eval_score_tap
-        eval_tap_opt = {}
-        eval_tap_opt['ground_truth_filename']='/data/huichengzheng/wangteng/dvc2_pytorch04/data/captiondata/val_forARAN.json'
-        eval_tap_opt['proposal_filename']=json_path
-        score['ARAN'] = eval_score_tap.main(**eval_tap_opt)
 
     # Switch back to training mode
     for model in models:

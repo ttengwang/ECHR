@@ -12,12 +12,10 @@ import shutil
 import opts
 from dataloader import *
 import eval_utils
-# from OLD import eval_utils_diff
+
 import misc.utils as utils
-from misc.rewards import init_scorer, get_self_critical_reward2
 from CaptionGenerator import CaptionGenerator
 
-# from misc.tensorboard_logging import tf_Logger
 from tensorboardX import SummaryWriter
 import models
 import cPickle
@@ -79,6 +77,8 @@ def print_opt(opt, allmodels, logger):
 
 
 def build_floder_and_create_logger(opt):
+    if not os.path.exists('save'):
+        os.mkdir('save')
     if opt.start_from != None:
         print('start training from id:{}'.format(opt.start_from))
         save_folder = os.path.join('save', opt.start_from)
@@ -256,7 +256,7 @@ def train(opt):
             print('vid:', data['vid'])
             print('info:', data['infos'])
 
-        torch.cuda.synchronize()
+
 
         if (data["proposal_num"] <= 0) or (data['fc_feats'].shape[0] <= 1):
             bad_video_num += 1  # print('vid:{} has no good proposal.'.format(data['vid']))
@@ -330,7 +330,7 @@ def train(opt):
 
                 loss_sum[2] = loss_sum[2] + total_loss.item()
 
-        torch.cuda.synchronize()
+
 
         # Updating epoch num
         iteration += 1
@@ -388,32 +388,24 @@ def train(opt):
             pred_json_path_T = os.path.join(save_folder, 'pred_sent',
                                           'pred_num{}_iter{}.json')
 
-            # if 'alter' in opt.training_mode:
             if flag_training_what == 'tap':
                 eval_kwargs['topN'] = 1000
                 predictions, eval_score, val_loss = eval_utils.eval_split(allmodels, crits, loader, pred_json_path_T.format(eval_kwargs['num_vids_eval'], iteration),
                                                                           eval_kwargs,
                                                                           flag_eval_what='tap')
             else:
-                if vars(opt).get('fast_eval_cg', False) == False:
-                    predictions, eval_score, val_loss = eval_utils.eval_split(allmodels, crits, loader, pred_json_path_T.format(eval_kwargs['num_vids_eval'], iteration),
-                                                                              eval_kwargs,
-                                                                              flag_eval_what='tap_cg')
 
                 predictions2, eval_score2, val_loss2 = eval_utils.eval_split(allmodels, crits, loader, pred_json_path_T.format(eval_kwargs2['num_vids_eval'], iteration),
                                                                              eval_kwargs2,
                                                                              flag_eval_what='cg')
-
-                if (not vars(opt).get('fast_eval_cg', False) == False)  or (not vars(opt).get('fast_eval_cg_top10', False) == False):
-                        eval_score = eval_score2
-                        val_loss = val_loss2
-                        predictions = predictions2
-
-
-            # else:
-            #    predictions, eval_score, val_loss = eval_utils.eval_split(allmodels, crits, loader, pred_json_path,
-            #                                                              eval_kwargs,
-            #                                                              flag_eval_what=flag_training_what)
+                if opt.fast_eval_cg == False:
+                    predictions, eval_score, val_loss = eval_utils.eval_split(allmodels, crits, loader, pred_json_path_T.format(eval_kwargs['num_vids_eval'], iteration),
+                                                                              eval_kwargs,
+                                                                              flag_eval_what='tap_cg')
+                else:
+                    eval_score = eval_score2
+                    val_loss = val_loss2
+                    predictions = predictions2
 
             f_f1 = lambda x, y: 2 * x * y / (x + y)
             f1 = f_f1(eval_score['Recall'], eval_score['Precision']).mean()
@@ -515,9 +507,7 @@ def train(opt):
                 tf_writer.close()
                 break
 
-
 if __name__ == '__main__':
     opt = opts.parse_opts()
     opt.fc_feat_size = opt.hidden_dim
     train(opt)
-    # myDebug(opt)

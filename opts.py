@@ -26,7 +26,7 @@ def parse_opts():
     #                    help='path to the directory containing the preprocessed fc feats')
 
     parser.add_argument('--input_c3d_dir2', type=str,
-                        default='data/c3d_npy_s32',  # 'data/c3d_npy'
+                        default='data/c3d_npy',  # 'data/c3d_npy'
                         help='path to the directory containing the preprocessed fc feats')
 
     parser.add_argument('--input_lda_path', type=str,
@@ -275,7 +275,7 @@ def parse_opts():
     parser.add_argument('--diff', type=int, default=0, )
     parser.add_argument('--data_type', type=str, default='rescale')  # 'rescale, dot'
 
-    parser.add_argument('--SOTA_json', type=str, default='data/SOTA_TEP/Top100.json')  # 'rescale, dot'
+    parser.add_argument('--SOTA_json', type=str, default='data/SOTA_TEP/sst_top100_evalset.json')  # 'rescale, dot'
 
     args = parser.parse_args()
 

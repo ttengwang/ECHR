@@ -19,13 +19,7 @@ class SST(nn.Module):
         self.rnn_dropout = opt.rnn_dropout
         self.K = opt.K
         self.data_for_test = []
-        if vars(opt).get('reduce_input_dim_layer', False):
-            self.reduce_dim_layer = nn.Linear(opt.raw_input_dim, 512)
-            self.rnn = nn.LSTM(512, opt.hidden_dim, opt.rnn_num_layers, batch_first=True,
-                               dropout=opt.rnn_dropout)
-        else:
-            opt.raw_video_dim =  vars(opt).get('raw_video_dim', opt.video_dim)
-            self.rnn = nn.LSTM(opt.raw_video_dim, opt.hidden_dim, opt.rnn_num_layers, batch_first=True,
+        self.rnn = nn.LSTM(opt.video_dim, opt.hidden_dim, opt.rnn_num_layers, batch_first=True,
                                dropout=opt.rnn_dropout)
 
     def eval(self):

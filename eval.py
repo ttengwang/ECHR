@@ -31,9 +31,8 @@ def main(val_opt, logger):
 
     with open(infos_path) as f:
         logger.info('load info from {}'.format(infos_path))
-        try:
-            opt = cPickle.load(f)['best']['opt']
-            vars(opt).update(vars(val_opt))
+        opt = cPickle.load(f)['best']['opt']
+        vars(opt).update(vars(val_opt))
 
     # Create the Data Loader instance
     if opt.flag_eval_what == "cg_extend":

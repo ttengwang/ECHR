@@ -142,7 +142,7 @@ class DataLoader(data.Dataset):
             train_only['sampled_ids'] = np.array(sampled_ids).astype('int')
 
 
-        return (feature,
+        return [feature,
                 lda_feat,
                 att_feature,
                 tap_labels,
@@ -154,7 +154,7 @@ class DataLoader(data.Dataset):
                 # tap_good_proposal_info,
                 w1,
                 ix,
-                other)
+                other]
 
     def __init__(self, opt):
         # initial some variables

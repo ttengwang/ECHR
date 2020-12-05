@@ -18,13 +18,13 @@ class CaptionGenerator(nn.Module):
         '''
         VL+VC+VH, EC+EH+ER1+ER2+ER3, CL+CC+CH
         '''
-        torch.cuda.synchronize()
+
         t0=time.time()
         video = self.get_video_context( tap_feats, c3d_feats, lda_feats, ind_select_list, soi_select_list)
         event = self.get_event_context( tap_feats, c3d_feats, lda_feats, ind_select_list, soi_select_list)
         clip, clip_mask = self.get_clip_context( tap_feats, c3d_feats, lda_feats, ind_select_list, soi_select_list)
 
-        torch.cuda.synchronize()
+
         t1=time.time()
         if mode=='train':
             pred_captions = self.lm_model(video, event, clip, clip_mask, lm_labels)
@@ -38,7 +38,7 @@ class CaptionGenerator(nn.Module):
             return gen_result, sample_logprobs, greedy_res
         elif mode == 'eval':
             seq, cg_prob = self.lm_model.sample(video, event, clip, clip_mask)
-            torch.cuda.synchronize()
+
             t2= time.time()
             print(t1 - t0, t2 - t1)
             return seq, cg_prob
