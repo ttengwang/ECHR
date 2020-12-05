@@ -12,7 +12,8 @@ __pycache__/
 
 # C extensions
 *.so
-__MACOSX/
+__MACF
+OSX/
 # Distribution / packaging
 .Python
 build/
